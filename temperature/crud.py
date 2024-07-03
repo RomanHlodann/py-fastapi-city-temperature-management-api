@@ -2,12 +2,12 @@ import datetime
 import os
 import httpx
 
-from sqlalchemy import select, insert
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from dotenv import load_dotenv
 
-from . import models, schemas
+from temperature import models
 from city import crud
 
 load_dotenv()
@@ -16,20 +16,23 @@ API_KEY = os.getenv("WEATHER_API_KEY")
 URL = "https://api.weatherapi.com/v1/current.json"
 
 
-async def get_all_temperatures(db: AsyncSession):
+async def get_all_temperatures(db: AsyncSession) -> [models.Temperature]:
     query = select(models.Temperature)
     temperature_list = await db.execute(query)
     return [temperature[0] for temperature in temperature_list.fetchall()]
 
 
-async def get_single_city_temperatures(db: AsyncSession, city_id: int):
+async def get_single_city_temperatures(
+        db: AsyncSession,
+        city_id: int
+) -> [models.Temperature]:
     query = (select(models.Temperature)
              .where(models.Temperature.city_id == city_id))
     temperature_list = await db.execute(query)
     return [temperature[0] for temperature in temperature_list.fetchall()]
 
 
-async def update_temperature_data(db: AsyncSession):
+async def update_temperature_data(db: AsyncSession) -> [models.Temperature]:
     cities = await crud.get_all_cities(db)
     temperatures = []
     async with httpx.AsyncClient() as client:
